@@ -9,10 +9,17 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: eu-west-1
+  ECR_REPOSITORY: stacklaunch-api
+
 jobs:
 
   test:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -28,8 +35,109 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Run vet
+        run: go vet ./...
+
       - name: Run tests
         run: go test ./...
 
-      - name: Run vet
-        run: go vet ./...
+      - name: Verify Go build
+        run: go build ./...
+
+
+  build-and-push:
+    needs: test
+
+    runs-on: ubuntu-latest
+
+    # PRs can test the code,
+    # but only a push to master may publish an image to AWS.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+
+    services:
+
+      postgres:
+        image: postgres:16
+
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: testdb
+
+        ports:
+          - 5432:5432
+
+        options: >-
+          --health-cmd="pg_isready -U testuser -d testdb"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::303974373405:role/stacklaunch-github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ${{ env.ECR_REPOSITORY }}:${{ github.sha }} \
+            .
+
+      - name: Run API container
+        run: |
+          docker run -d \
+            --name stacklaunch-api-test \
+            -p 8080:8080 \
+            -e DB_HOST=host.docker.internal \
+            -e DB_PORT=5432 \
+            -e DB_USER=testuser \
+            -e DB_PASSWORD=testpassword \
+            -e DB_NAME=testdb \
+            -e DB_SSLMODE=disable \
+            --add-host=host.docker.internal:host-gateway \
+            ${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: Test container health endpoint
+        run: |
+          for i in {1..10}; do
+
+            if curl --fail http://localhost:8080/health; then
+              echo "API health check passed"
+              exit 0
+            fi
+
+            echo "Waiting for API..."
+            sleep 2
+
+          done
+
+          echo "API failed health check"
+
+          docker logs stacklaunch-api-test
+
+          exit 1
+
+      - name: Tag image for ECR
+        run: |
+          docker tag \
+            ${{ env.ECR_REPOSITORY }}:${{ github.sha }} \
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: Push image to ECR
+        run: |
+          docker push \
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
