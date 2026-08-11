@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"testing"
 )
 
 type User struct {
@@ -85,11 +84,12 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 	}
 }
 
-func TestCIPipelineFailure(t *testing.T) {
-	expected := 10
-	actual := 5
+// break the code
+// func TestCIPipelineFailure(t *testing.T) {
+// 	expected := 10
+// 	actual := 5
 
-	if actual != expected {
-		t.Errorf("expected %d, got %d", expected, actual)
-	}
-}
+// 	if actual != expected {
+// 		t.Errorf("expected %d, got %d", expected, actual)
+// 	}
+// }
