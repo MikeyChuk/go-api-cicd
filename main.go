@@ -83,13 +83,3 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 		log.Printf("Unable to encode response: %v", err)
 	}
 }
-
-// break the code
-// func TestCIPipelineFailure(t *testing.T) {
-// 	expected := 10
-// 	actual := 5
-
-// 	if actual != expected {
-// 		t.Errorf("expected %d, got %d", expected, actual)
-// 	}
-// }
