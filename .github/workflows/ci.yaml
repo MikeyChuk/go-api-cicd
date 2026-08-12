@@ -16,6 +16,10 @@ permissions:
 env:
   AWS_REGION: eu-west-1
   ECR_REPOSITORY: stacklaunch-go-api
+  ECS_CLUSTER: stacklaunch-lab-dev-ecs
+  ECS_SERVICE: stacklaunch-dev-api
+  ECS_TASK_DEFINITION: ecs/task-definition.json
+  ECS_CONTAINER_NAME: api
 
 jobs:
 
@@ -114,10 +118,12 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          docker build \
-            -t ${{ env.ECR_REPOSITORY }}:${{ github.sha }} \
-            .
+         docker build \
+           -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ github.sha }} \
+           .
 
       - name: Run API container
         run: |
@@ -160,6 +166,29 @@ jobs:
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
 
       - name: Push image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           docker push \
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+            $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: Render ECS task definition
+        id: render-task-definition
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+         task-definition: ${{ env.ECS_TASK_DEFINITION }}
+         container-name: ${{ env.ECS_CONTAINER_NAME }}
+         image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: Deploy ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-task-definition.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Verify production health endpoint
+        run: |
+         curl --fail https://stacklaunch-dev-alb-1250476172.eu-west-1.elb.amazonaws.com/health
+
