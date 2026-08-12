@@ -47,7 +47,7 @@
 
         {
         "name": "DB_PASSWORD",
-        "valueFrom": "arn:aws:secretsmanager:eu-west-1:303974373405:secret:stacklaunch/dev/api/database-zuhueH"
+        "valueFrom": "arn:aws:secretsmanager:eu-west-1:303974373405:secret:stacklaunch/dev/api/database-zuhueH:DB_PASSWORD::"
         }
       ],
 
