@@ -16,7 +16,7 @@
       "environment": [
         {
           "name": "DB_HOST",
-          "value": "YOUR_RDS_ENDPOINT"
+          "value": "db-stacklaunch.cxes4uuugay0.eu-west-1.rds.amazonaws.com"
         },
         {
           "name": "DB_PORT",
@@ -24,7 +24,7 @@
         },
         {
           "name": "DB_USER",
-          "value": "YOUR_DB_USERNAME"
+          "value": "postgres_admin"
         },
         {
           "name": "DB_NAME",
