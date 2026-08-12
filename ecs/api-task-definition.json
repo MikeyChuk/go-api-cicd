@@ -1,68 +1,108 @@
 {
-
-    "containerDefinitions": [
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "303974373405.dkr.ecr.eu-west-1.amazonaws.com/stacklaunch-go-api:v6",
+      "cpu": 0,
+      "portMappings": [
         {
-            "name": "api",
-            "image": "303974373405.dkr.ecr.eu-west-1.amazonaws.com/stacklaunch-go-api:v6",
-            "cpu": 0,
-            "portMappings": [
-                {
-                    "containerPort": 8080,
-                    "hostPort": 8080,
-                    "protocol": "tcp"
-                }
-            ],
-            "essential": true,
-            "environment": [],
-            "mountPoints": [],
-            "volumesFrom": [],
-            "linuxParameters": {
-                "initProcessEnabled": true
-            },
-            "secrets": [],
-            "logConfiguration": {
-                "logDriver": "awslogs",
-                "options": {
-                    "awslogs-group": "/ecs/stacklaunch-api",
-                    "awslogs-region": "eu-west-1",
-                    "awslogs-stream-prefix": "ecs"
-                }
-            },
-            "systemControls": []
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
         }
-    ],
-    "family": "stacklaunch-api",
-    "taskRoleArn": "arn:aws:iam::303974373405:role/stacklaunch-dev-ecs-task-role",
-    "executionRoleArn": "arn:aws:iam::303974373405:role/stacklaunch-dev-ecs-task-execution-role",
-    "networkMode": "awsvpc",
-    "volumes": [],
-    "placementConstraints": [],
-    "requiresCompatibilities": [
-        "FARGATE"
-    ],
-    "cpu": "256",
-    "memory": "512",
+      ],
+      "essential": true,
 
-    "tags": [
+      "environment": [
         {
-            "key": "Project",
-            "value": "stacklaunch"
+          "name": "DB_HOST",
+          "value": "YOUR_RDS_ENDPOINT"
         },
         {
-            "key": "Environment",
-            "value": "dev"
+          "name": "DB_PORT",
+          "value": "5432"
         },
         {
-            "key": "ManagedBy",
-            "value": "Terraform"
+          "name": "DB_USER",
+          "value": "YOUR_DB_USERNAME"
         },
         {
-            "key": "Platform",
-            "value": "StackLaunch"
+          "name": "DB_NAME",
+          "value": "postgres"
         },
         {
-            "key": "Client",
-            "value": "stacklaunch-lab"
+          "name": "DB_SSLMODE",
+          "value": "require"
         }
-    ]
+      ],
+
+      "mountPoints": [],
+      "volumesFrom": [],
+
+      "linuxParameters": {
+        "initProcessEnabled": true
+      },
+
+      "secrets": [
+
+        {
+        "name": "DB_PASSWORD",
+        "valueFrom": "aws:secretsmanager:eu-west-1:303974373405:secret:stacklaunch/dev/api/database-zuhueH"
+        }
+      ],
+
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/stacklaunch-api",
+          "awslogs-region": "eu-west-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+
+      "systemControls": []
+    }
+  ],
+
+  "family": "stacklaunch-api",
+
+  "taskRoleArn": "arn:aws:iam::303974373405:role/stacklaunch-dev-ecs-task-role",
+
+  "executionRoleArn": "arn:aws:iam::303974373405:role/stacklaunch-dev-ecs-task-execution-role",
+
+  "networkMode": "awsvpc",
+
+  "volumes": [],
+
+  "placementConstraints": [],
+
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+
+  "cpu": "256",
+  "memory": "512",
+
+  "tags": [
+    {
+      "key": "Project",
+      "value": "stacklaunch"
+    },
+    {
+      "key": "Environment",
+      "value": "dev"
+    },
+    {
+      "key": "ManagedBy",
+      "value": "Terraform"
+    },
+    {
+      "key": "Platform",
+      "value": "StackLaunch"
+    },
+    {
+      "key": "Client",
+      "value": "stacklaunch-lab"
+    }
+  ]
 }
