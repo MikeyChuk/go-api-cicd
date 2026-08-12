@@ -188,5 +188,5 @@ jobs:
 
       - name: Verify production health endpoint
         run: |
-         curl --fail http://stacklaunch-dev-alb-1250476172.eu-west-1.elb.amazonaws.com/health
+         curl --fail http://stacklaunch-dev-alb-24015964.eu-west-1.elb.amazonaws.com/health
 
