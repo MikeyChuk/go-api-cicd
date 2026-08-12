@@ -18,7 +18,7 @@ env:
   ECR_REPOSITORY: stacklaunch-go-api
   ECS_CLUSTER: stacklaunch-lab-dev-ecs
   ECS_SERVICE: stacklaunch-dev-api
-  ECS_TASK_DEFINITION: ecs/task-definition.json
+  ECS_TASK_DEFINITION: ecs/api-task-definition.json
   ECS_CONTAINER_NAME: api
 
 jobs:
@@ -126,6 +126,8 @@ jobs:
            .
 
       - name: Run API container
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           docker run -d \
             --name stacklaunch-api-test \
@@ -137,7 +139,7 @@ jobs:
             -e DB_NAME=testdb \
             -e DB_SSLMODE=disable \
             --add-host=host.docker.internal:host-gateway \
-            ${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+            $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
 
       - name: Test container health endpoint
         run: |
@@ -159,11 +161,6 @@ jobs:
 
           exit 1
 
-      - name: Tag image for ECR
-        run: |
-          docker tag \
-            ${{ env.ECR_REPOSITORY }}:${{ github.sha }} \
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
 
       - name: Push image to ECR
         env:
@@ -190,5 +187,5 @@ jobs:
 
       - name: Verify production health endpoint
         run: |
-         curl --fail https://stacklaunch-dev-alb-1250476172.eu-west-1.elb.amazonaws.com/health
+         curl --fail http://stacklaunch-dev-alb-1250476172.eu-west-1.elb.amazonaws.com/health
 
