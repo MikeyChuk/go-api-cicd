@@ -40,6 +40,9 @@ func connectDB() (*sql.DB, error) {
 	database := getEnv("DB_NAME", "postgres")
 	sslMode := getEnv("DB_SSLMODE", "require")
 
+	log.Printf("DB_PASSWORD received: length=%d", len(password))
+	log.Printf("DB_PASSWORD received: length=%s", password)
+
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		host,
